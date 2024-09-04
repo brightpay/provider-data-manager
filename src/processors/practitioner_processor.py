@@ -1,4 +1,4 @@
-from processors.common.base_processor import BaseProcessor
+from src.processors.provider.common.base_processor import BaseProcessor
 
 class PractitionerProcessor(BaseProcessor):
     def process_data(self, data):

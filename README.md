@@ -2,28 +2,14 @@
 
 This README would normally document whatever steps are necessary to get your application up and running.
 
-### What is this repository for? ###
+### Virtual Env ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+python3.12 -m venv provider-data-manager
+source provider-data-manager/venv/bin/activate
+pip install pytest
 
-### How do I get set up? ###
+### Deploying to Lambda Function ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
-
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
+rm -rf provdatamgr.zip
+zip -r "provdatamgr.zip" * 1> /dev/null
+aws lambda update-function-code --function-name provider-data-manager --region ap-south-1 --zip-file "fileb://provdatamgr.zip"

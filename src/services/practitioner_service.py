@@ -1,4 +1,4 @@
-from models.practitioner import Practitioner
+from src.models.common.practitioner import Practitioner
 
 class PractitionerService:
     @staticmethod
