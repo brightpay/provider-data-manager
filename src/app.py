@@ -2,9 +2,9 @@ import json
 import logging
 # from src.models import db_engine
 from .processors.router import get_processor
-from .services.practitioner_service import PractitionerService
-from .services.practice_service import PracticeService
-from .services.provider_service import ProviderService
+from .services.practitioner import PractitionerService
+from .services.practice import PracticeService
+from .services.provider import ProviderService
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
