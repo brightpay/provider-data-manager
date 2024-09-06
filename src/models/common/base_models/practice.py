@@ -19,3 +19,9 @@ class PracticeBaseDataModel:
                 PracticeService.update_city_center_in_s3(city_id, lat, lng)
 
         return lat, lng
+    
+    def log_geo_search_results(self, data):
+        """
+        Log the results of geo search in a database table.
+        """
+        PracticeService.log(data, 'practice', 'geo_search_results')

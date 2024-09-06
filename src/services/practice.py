@@ -2,7 +2,7 @@
 import json
 import boto3
 from src.config import Config
-from src.utils import default as default_utils
+from src.utils import default as default_utils, sql as sql_utils
 
 s3_client = boto3.client('s3')
 bucket_name = Config.S3_BUCKET
@@ -46,11 +46,32 @@ class PracticeService:
         )
         
         if places_search.get('status') == 'OK' and places_search.get('results'):
-            # Matching the name to find the correct place
-            for place in places_search.get('results'):
-                if name.lower() in place.get('name', '').lower():
-                    return place
-        return None  # Return None if no matching place is found
+            return places_search['results']
+        return []
+    
+    @staticmethod
+    def save_geo_search_results(practice_id, health_system=None, directory=None, data):
+        """
+        Log the results of geo search in a database table.
+        """
+        places_to_insert = []
+        for _result in data:
+            geocode_data = {
+                'directory': directory,
+                'health_system': health_system,
+                'practice_id': practice_id,
+                'lat': _result['geometry']['location']['lat'],
+                'lng': _result['geometry']['location']['lng'],
+                'name': _result['name'].replace("'","''"),
+                'place_id': _result['place_id'],
+                'plus_code': _result.get('plus_code',{}).get('global_code'),
+                'rating': _result.get('rating'),
+                'user_ratings_total': _result.get('user_ratings_total'),
+                'vicinity': _result['vicinity'].replace("'","''"),
+                'place_types': '|'.join(_result['types'])
+            }
+            places_to_insert.append(geocode_data)
+        sql_utils.log(places_to_insert, 'bright', 'hospitals_geocode_search_results')
 
     @staticmethod
     def get_city_center_from_s3(city_id):

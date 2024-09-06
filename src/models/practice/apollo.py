@@ -23,15 +23,15 @@ class ApolloPracticeDataModel(PracticeBaseDataModel):
         lat, lng = self.handle_lat_lng(lat, lng, city_id, self.practice.get('cityName'))
 
         # Use base method to search in Google Places
-        google_place_details = PracticeService.search_in_google_places(
+        google_place_search_results = PracticeService.search_in_google_places(
             self.practice.get('hospitalName'), lat, lng, Config.API_KEYS['GOOGLE_GEO_KEY']
         )
-        print('Google Place Details:', google_place_details)
+        PracticeService.save_geo_search_results('apollo', self.practice.get('hospitalId'), google_place_search_results)
+        print('Google Place Details:', google_place_search_results)
 
         return {
             'name': self.practice.get('hospitalName'),
             'type': 'hospital' if self.practice.get('hospitalType') == "1" else "clinic" if self.practice.get('hospitalType') == "2" else 'other',
             'city': self.practice.get('cityName'),
-            'address': self.practice.get('HosptialAddress'),
-            'google_place_details': google_place_details
+            'address': self.practice.get('HosptialAddress')
         }
