@@ -20,8 +20,8 @@ class PracticeBaseDataModel:
 
         return lat, lng
     
-    def log_geo_search_results(self, data):
+    def match_geo_search_results(self, practice, geo_search_results):
         """
-        Log the results of geo search in a database table.
+        Match the geo search results with the practice data.
         """
-        PracticeService.log(data, 'practice', 'geo_search_results')
+        pass

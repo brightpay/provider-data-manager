@@ -50,7 +50,7 @@ class PracticeService:
         return []
     
     @staticmethod
-    def save_geo_search_results(practice_id, health_system=None, directory=None, data):
+    def save_geo_search_results(practice_id, data, health_system=None, directory=None):
         """
         Log the results of geo search in a database table.
         """
@@ -71,7 +71,28 @@ class PracticeService:
                 'place_types': '|'.join(_result['types'])
             }
             places_to_insert.append(geocode_data)
-        sql_utils.log(places_to_insert, 'bright', 'hospitals_geocode_search_results')
+        sql_utils.bulk_insert('provider_connector.practice_google_places_search_results', places_to_insert)
+
+    @staticmethod
+    def save_geo_match_exceptions(practice_id, exception, practice_data, geo_results, health_system=None, directory=None):
+        """
+        Log the results of geo search in a database table.
+        """
+        exception_base_data = {
+            'directory': directory,
+            'health_system': health_system,
+            'practice_id': practice_id,
+            'exception': exception,
+            'practice_data': json.dumps(practice_data),
+            'lat': practice_data.get('lat'),
+            'lng': practice_data.get('lng'),
+            'name': practice_data.get('name'),
+            'city': practice_data.get('city'),
+            'address': practice_data.get('address'),
+        }
+        if exception == 'no_results':
+            sql_utils.bulk_insert('provider_connector.practice_geo_match_exceptions', [exception_base_data])
+        
 
     @staticmethod
     def get_city_center_from_s3(city_id):

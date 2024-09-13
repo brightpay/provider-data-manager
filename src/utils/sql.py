@@ -5,7 +5,6 @@ import pymysql
 import datetime
 from decimal import Decimal
 
-
 lambda_client = boto3.client('lambda')
 dynamodb = boto3.resource("dynamodb")
 s3 = boto3.client('s3')
@@ -71,27 +70,48 @@ def execute_query(sql_query, sql_query_params = None, insert_multiple = None):
 
 	return sql_result
 
-def bulk_insert(table, records):
+def bulk_insert(table, records, ignore_columns=[]):
+    if len(records) > 0:
+        column_names = [item for item in list(records[0].keys()) if item not in ignore_columns]
+        values = []
+        for record in records:
+            formatted_values = []
+            for col in column_names:
+                if isinstance(record.get(col, ''), dict) or isinstance(record.get(col, ''), list):
+                    formatted_values.append(json.dumps(record[col]))
+                else:
+                    formatted_values.append(record.get(col))  # for non-dictionary and non-list values
+            values.append(tuple(formatted_values))
 
-	#records should be a list of dictionaries
-	insert_string = None
-	if len(records) > 0:
-		for _rec in records:
+        insert_string = (
+            "INSERT INTO {} ({}) VALUES ({})"
+            .format(table, ', '.join(column_names), ', '.join(['%s'] * len(column_names)))
+        )
+        
+        try:
+            cnx = pymysql.connect(
+                user=os.environ['rds_user'], 
+                password=os.environ['rds_pwd'],
+                host=os.environ['rds_host'],
+                database=os.environ.get('rds_database', 'unity'),
+                ssl={'ca': 'rds-combined-ca-bundle.pem'},
+                autocommit=True,
+                charset='utf8'
+            )
+            cursor = cnx.cursor()
+            cursor.executemany(insert_string, values)
+            cnx.commit()
 
-			insert_item = "('" + "','".join([str(_rec[_k]) for _k in list(_rec.keys())]) + "')"
+            print('Info', 'Bulk Insert Response', 'Insert Successful')
+            return 'Insert Successful'
+        except pymysql.MySQLError as err:
+            print('Error', 'Error with SQL Bulk Insert', str(err))
+        finally:
+            cursor.close()
+            cnx.close()
 
-			if insert_string:
-				insert_string += ',' + insert_item
-			else:
-				insert_string = insert_item
-
-		insert_string = "INSERT INTO " + table + " (" + ','.join(list(records[0].keys())) + ") VALUES " + insert_string + ";"
-		# customLog('Verbose','Bulk Insert Query', insert_string)
-		insert_query_response = execute_query(insert_string)
-		print('Info','Bulk Insert Response', insert_query_response)
-		return insert_query_response
-	else:
-		print('Error','Empty record set for SQL Bulk Insert')
+    else:
+        print('Error', 'Empty record set for SQL Bulk Insert')
 
 def log(data, database, table, sublog_table=None, sublog_data=[]):
 	log_data = {
