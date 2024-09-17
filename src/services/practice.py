@@ -3,6 +3,7 @@ import json
 import boto3
 from src.config import Config
 from src.utils import default as default_utils, sql as sql_utils
+from src.services.googlemaps import GoogleMapsService
 
 s3_client = boto3.client('s3')
 bucket_name = Config.S3_BUCKET
@@ -12,42 +13,6 @@ class PracticeService:
     def save_practice(practice_data):
         # Save the practice to the database (example method)
         pass
-
-    @staticmethod
-    def get_city_center_coordinates(city_name, api_key):
-        """
-        Get city center coordinates using Google Geocoding API if lat/lng are unavailable.
-        """
-        geocode_url = f'https://maps.googleapis.com/maps/api/geocode/json?address={city_name}&key={api_key}'
-        geocode_search = default_utils.make_request(
-            url=geocode_url, api_key=api_key, method='GET', headers={'Content-Type': 'application/json'}
-        )
-
-        if geocode_search.get('status') == 'OK' and geocode_search.get('results'):
-            lat = geocode_search['results'][0]['geometry']['location']['lat']
-            lng = geocode_search['results'][0]['geometry']['location']['lng']
-            return lat, lng
-        else:
-            raise ValueError(f"Unable to fetch city center coordinates for {city_name}")
-
-    @staticmethod
-    def search_in_google_places(name, lat, lng, api_key):
-        """
-        Search for a place using Google Nearby Places API based on lat/lng.
-        """
-        place_type = 'hospital|clinic|dentist|doctor'
-        nearby_places_url = (
-            f"https://maps.googleapis.com/maps/api/place/nearbysearch/json"
-            f"?location={lat},{lng}&radius=5000&type={place_type}&keyword={name}&key={api_key}"
-        )
-        
-        places_search = default_utils.make_request(
-            url=nearby_places_url, api_key=api_key, method='GET', headers={'Content-Type': 'application/json'}
-        )
-        
-        if places_search.get('status') == 'OK' and places_search.get('results'):
-            return places_search['results']
-        return []
     
     @staticmethod
     def save_geo_search_results(practice_id, data, health_system=None, directory=None):
@@ -72,6 +37,21 @@ class PracticeService:
             }
             places_to_insert.append(geocode_data)
         sql_utils.bulk_insert('provider_connector.practice_google_places_search_results', places_to_insert)
+
+    @staticmethod
+    def cache_google_place_details(place_id, api_key):
+        """
+        Cache the Google Place Details in MySQL DB
+        """
+        google_place_details = GoogleMapsService.get_google_place_details_to_cache(place_id, api_key)
+        print(f"Google Place Details: {google_place_details}")
+        if google_place_details:
+            sql_utils.bulk_insert('bright.google_place_details_cache', [google_place_details['place']])
+            sql_utils.bulk_insert('bright.google_place_opening_hours', google_place_details['hours'])
+            sql_utils.bulk_insert('bright.google_place_photos', google_place_details['photos'])
+            sql_utils.bulk_insert('bright.google_place_reviews', google_place_details['reviews'])
+
+        return
 
     @staticmethod
     def save_geo_match_exceptions(practice_id, exception, practice_data, geo_results, health_system=None, directory=None):

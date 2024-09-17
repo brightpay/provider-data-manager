@@ -1,6 +1,7 @@
 # src/models/practice/apollo.py
 from src.models.common.base_models.practice import PracticeBaseDataModel
 from src.services.practice import PracticeService
+from src.services.googlemaps import GoogleMapsService
 from src.config import Config
 
 class ApolloPracticeDataModel(PracticeBaseDataModel):
@@ -28,19 +29,16 @@ class ApolloPracticeDataModel(PracticeBaseDataModel):
         # Use common methods from PracticeBaseDataModel
         lat, lng = self.handle_lat_lng(lat, lng, _practice.get('city_id'), _practice.get('city'))
 
-        # Use Practice Service to search in Google Places
-        google_place_search_results = PracticeService.search_in_google_places(
-            _practice.get('name'), lat, lng, Config.API_KEYS['GOOGLE_GEO_KEY']
-        )
-        if len(google_place_search_results) == 0:
-            print(f"No results found for {_practice.get('name')} in Google Places API")
-            PracticeService.save_geo_match_exceptions(_practice.get('hospital_id'), 'no_results', _practice, [])
-            return
-        
-        PracticeService.save_geo_search_results(_practice.get('hospital_id'), google_place_search_results, health_system='apollo')
-        print('Google Place Details:', google_place_search_results)
-        self.match_geo_search_results(_practice, google_place_search_results)
+       # Use common practice search and processing logic from PracticeBaseDataModel
+        search_results = self.process_practice_search(_practice)
 
-        _processed = self.process_data(provider_id=self.provider_id, practice=_practice)
-        print('Processed Data:', _processed)
-        return _processed
+        if search_results:
+            print('Processed Data:', search_results)
+            search_results.pop('name', None)
+            search_results.pop('address', None)
+            search_results.pop('city', None)
+            _practice.update(search_results)
+        else:
+            print(f"Processing completed for {_practice.get('name')} without any valid results.")
+
+        return _practice
