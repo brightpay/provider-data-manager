@@ -2,7 +2,7 @@ from src.models.common.provider import Provider
 
 class ProviderService:
     @staticmethod
-    def save_provider(practitioner_data):
+    def save_provider(provider_data):
         provider = Provider(
             name=provider_data['name'],
             specialty=provider_data['specialty'],
