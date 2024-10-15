@@ -102,7 +102,7 @@ def bulk_insert(table, records, ignore_columns=[]):
             cursor.executemany(insert_string, values)
             cnx.commit()
 
-            print('Info', 'Bulk Insert Response', 'Insert Successful')
+            print('Info', 'Bulk Insert into {} Successful'.format(table))
             return 'Insert Successful'
         except pymysql.MySQLError as err:
             print('Error', 'Error with SQL Bulk Insert', str(err))

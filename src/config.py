@@ -3,6 +3,7 @@ import os
 class Config:
     DATABASE_URI = os.environ.get('DATABASE_URI', 'your-default-database-uri')
     S3_BUCKET = os.environ.get('S3_BUCKET', 'provider-data.brighthealth.in')
+    STATIC_DATA_S3_BUCKET = os.environ.get('STATIC_DATA_S3_BUCKET', 'files.brighthealth.in')
     API_KEYS = {
         'GOOGLE_GEO_KEY': os.environ.get('GOOGLE_GEO_KEY', ''),
         'apollo': os.environ.get('APOLLO_AUTH_TOKEN', ''),

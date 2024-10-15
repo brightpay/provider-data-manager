@@ -16,6 +16,7 @@ class PracticeBaseDataModel:
         if lat == "0" or lng == "0" or lat == '' or lng == '' or lat is None or lng is None:
             # Check S3 for city center coordinates
             lat, lng = PracticeService.get_city_center_from_s3(city_id)
+            print('City Center from S3:', lat, lng)
             if lat is None or lng is None:
                 # Get city center coordinates from Google if not found in S3
                 lat, lng = GoogleMapsService.get_city_center_coordinates(city_name, self.api_key)

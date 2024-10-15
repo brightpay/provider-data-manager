@@ -7,6 +7,7 @@ from src.services.googlemaps import GoogleMapsService
 
 s3_client = boto3.client('s3')
 bucket_name = Config.S3_BUCKET
+static_data_bucket_name = Config.STATIC_DATA_S3_BUCKET
 
 class PracticeService:
     @staticmethod
@@ -80,9 +81,9 @@ class PracticeService:
         Fetch city center coordinates from S3 file by cityId.
         """
         try:
-            response = s3_client.get_object(Bucket=bucket_name, Key=f'apollo/static/city_center_lat_lng.json')
+            response = s3_client.get_object(Bucket=static_data_bucket_name, Key=f'provider-data/static/health_systems_related/apollo/city_center_lat_lng.json')
             city_center_data = json.loads(response['Body'].read().decode('utf-8'))
-
+            print('City Center Data:', city_center_data)
             if city_id in city_center_data:
                 lat = city_center_data[city_id]['lat']
                 lng = city_center_data[city_id]['lng']
@@ -102,7 +103,7 @@ class PracticeService:
         try:
             # Fetch existing data
             try:
-                response = s3_client.get_object(Bucket=bucket_name, Key=f'apollo/static/city_center_lat_lng.json')
+                response = s3_client.get_object(Bucket=static_data_bucket_name, Key=f'provider-data/static/health_systems_related/apollo/city_center_lat_lng.json')
                 city_center_data = json.loads(response['Body'].read().decode('utf-8'))
             except s3_client.exceptions.NoSuchKey:
                 city_center_data = {}
@@ -112,8 +113,8 @@ class PracticeService:
 
             # Upload updated data back to S3
             s3_client.put_object(
-                Bucket=bucket_name,
-                Key=f'apollo/static/city_center_lat_lng.json',
+                Bucket=static_data_bucket_name,
+                Key=f'provider-data/static/health_systems_related/apollo/city_center_lat_lng.json',
                 Body=json.dumps(city_center_data),
                 ContentType='application/json'
             )
